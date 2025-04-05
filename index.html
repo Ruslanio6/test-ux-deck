@@ -176,24 +176,23 @@
 </head>
 <body>
 
-  <!-- Раздел 1 -->
+   <!-- Раздел 1 -->
   <div class="section visible">
-    <h1>Название теста</h1>
-    <h2>Подзаголовок</h2>
-    <p>Информация о тесте. Колода: <span id="deck-name">Колода 1</span></p>
+    <h1>Исследование игральных карт</h1>
+    <h2>Всего тестирую 8 колод, на каждую колоду по 3 борда. В среднем тест займет 14*8 + 16 = 128 секунд или около 2х минут. Пожалуйста максимум внимания на тест, не отвлекайся!</h2>
+    <p>Я покажу тебе 2 карты, у тебя будет 2 секунды чтоб их запомнить, будем считать что ты получил их на руку. После этого ты по порядку будешь видеть борды, никуда не торопись но и особо не медли, отмечай комбинации которые получилось бы собрать, если ты можешь собрать одновременно несколько комбинаций, отмечай их тоже, здесь важно чтобы. Сейчас будет тестироваться Колода: <span id="deck-name">Колода 1</span></p>
     <button class="next-button" onclick="nextSection()">Начать тест</button>
   </div>
 
   <!-- Раздел 2 -->
   <div class="section">
-    <h2>Раздел 2: Запомните карты</h2>
+    <h2>Запомни карты</h2>
     <img src="cards1.jpg" alt="Игральные карты" />
-    <p>Таймер начнется сразу, как только раздел откроется. Через 3 секунды тест продолжится автоматически...</p>
   </div>
 
   <!-- Раздел 3 -->
   <div class="section">
-    <h2>Раздел 3: Какие комбинации вы видите?</h2>
+    <h2>Какие комбинации ты видишь?</h2>
     <img src="cards2.jpg" alt="Игральные карты" />
     <div class="checkbox-group">
       <label class="checkbox-item"><input type="checkbox" value="Пара" /> Пара</label>
@@ -206,7 +205,7 @@
 
   <!-- Раздел 4 -->
   <div class="section">
-    <h2>Раздел 4: Какие комбинации вы видите?</h2>
+    <h2>Какие комбинации ты видишь?</h2>
     <img src="cards3.jpg" alt="Игральные карты" />
     <div class="checkbox-group">
       <label class="checkbox-item"><input type="checkbox" value="Фулл-хаус" /> Фулл-хаус</label>
@@ -219,7 +218,7 @@
 
   <!-- Раздел 5 -->
   <div class="section">
-    <h2>Раздел 5: Последний тест</h2>
+    <h2>Какие комбинации ты видишь?</h2>
     <img src="cards4.jpg" alt="Игральные карты" />
     <div class="checkbox-group">
       <label class="checkbox-item"><input type="checkbox" value="Флеш" /> Флеш</label>
@@ -227,7 +226,7 @@
       <label class="checkbox-item"><input type="checkbox" value="Две пары" /> Две пары</label>
       <label class="checkbox-item"><input type="checkbox" value="Пара" /> Пара</label>
     </div>
-    <button class="next-button" onclick="nextSection()">Завершить тест</button>
+    <button class="next-button" onclick="nextSection()">Завершить тест колоды</button>
   </div>
 
 </body>
