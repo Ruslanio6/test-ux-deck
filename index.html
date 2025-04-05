@@ -91,96 +91,98 @@
 }
   </style>
   <script>
-    let sectionIndex = 0;
-    let startTime;
-    let results = [];
-    let sections = [];
-    let currentDeckIndex = 0;
-    let decks = [
-      { img: "cards01.png", name: "Колода 1" },
-      { img: "cards02.png", name: "Колода 2" },
-      { img: "cards03.png", name: "Колода 3" },
-      { img: "cards04.png", name: "Колода 4" },
-      { img: "cards05.png", name: "Колода 5" },
-      { img: "cards06.png", name: "Колода 6" },
-      { img: "cards07.png", name: "Колода 7" },
-      { img: "cards08.png", name: "Колода 8" }
-    ];
+  let sectionIndex = 0;
+  let startTime;
+  let results = [];
+  let sections = [];
+  let currentDeckIndex = 0;
 
-    function showSection(index) {
-      if (index >= sections.length) {
-        endTest();
-        return;
-      }
+  const decks = Array.from({ length: 8 }, (_, i) => ({
+    folder: `images/deck${i + 1}`,
+    name: `Колода ${i + 1}`
+  }));
 
-      // Скрываем все разделы
-      sections.forEach(sec => sec.classList.remove("visible"));
-      sections[index].classList.add("visible");
+  function updateImages() {
+    const folder = decks[currentDeckIndex].folder;
+    const images = sections[1].querySelector("img");
+    const boards = [2, 3, 4]; // Разделы 3, 4, 5
 
-      // Обновляем название текущей колоды
-      document.getElementById("deck-name").textContent = decks[currentDeckIndex].name;
+    // Картинка для "на руке"
+    sections[1].querySelector("img").src = `${folder}/hand.png`;
 
-      // Сброс чекбоксов при переходе к новой колоде
-      resetCheckboxes();
+    // Картинки для трёх бордов
+    boards.forEach((sectionNum, idx) => {
+      const img = sections[sectionNum].querySelector("img");
+      img.src = `${folder}/board${idx + 1}.png`;
+    });
+  }
 
-      startTime = Date.now();
-      sectionIndex = index;
-
-      // Для раздела 2 начинаем таймер сразу после того, как раздел отображается
-      if (sectionIndex === 1) {
-        startTime = Date.now();
-        setTimeout(nextSection, 10); // Автоматический переход после 3 секунд
-      }
+  function showSection(index) {
+    if (index >= sections.length) {
+      endTest();
+      return;
     }
 
-    function nextSection() {
-      let timeSpent = (Date.now() - startTime) / 1000;
+    sections.forEach(sec => sec.classList.remove("visible"));
+    sections[index].classList.add("visible");
 
-      // Получаем выбранные чекбоксы
-      let checkboxes = document.querySelectorAll(".section.visible input[type='checkbox']:checked");
-      let selected = Array.from(checkboxes).map(cb => cb.value);
+    document.getElementById("deck-name").textContent = decks[currentDeckIndex].name;
+    resetCheckboxes();
 
-      // Сохраняем результат
-      results.push(`Колода ${currentDeckIndex + 1} | Раздел ${sectionIndex + 1} | Время: ${timeSpent} сек | Комбинации: ${selected.join(" ") || "Нет"}`);
+    sectionIndex = index;
+    startTime = Date.now();
 
-      // Переход к следующему разделу или завершение теста по колоде
-      if (sectionIndex === 4) { // Завершаем тест по текущей колоде
-        currentDeckIndex++;
-        if (currentDeckIndex < decks.length) {
-          sectionIndex = 0; // Сброс на первый раздел
-          showSection(0); // Начало нового теста с новой колодой
-        } else {
-          endTest(); // Завершаем тест для всех колод
-        }
-      } else if (sectionIndex === 1) { // После второго раздела переходим к третьему автоматически
-        setTimeout(() => showSection(sectionIndex + 1), 2000); // Ждем 2 секунды и переходим к следующему разделу
+    // При показе второго раздела — обновляем изображения
+    if (sectionIndex === 1) {
+      updateImages();
+      setTimeout(() => nextSection(), 2000);
+    }
+  }
+
+  function nextSection() {
+    const timeSpent = ((Date.now() - startTime) / 1000).toFixed(2);
+    const checkboxes = document.querySelectorAll(".section.visible input[type='checkbox']:checked");
+    const selected = Array.from(checkboxes).map(cb => cb.value);
+
+    results.push(`Колода ${currentDeckIndex + 1} | Раздел ${sectionIndex + 1} | Время: ${timeSpent} сек | Комбинации: ${selected.join(" ") || "Нет"}`);
+
+    if (sectionIndex === 4) {
+      currentDeckIndex++;
+      if (currentDeckIndex < decks.length) {
+        showSection(0);
       } else {
-        showSection(sectionIndex + 1); // Переход к следующему разделу
+        endTest();
+      }
+    } else {
+      if (sectionIndex === 1) {
+        setTimeout(() => showSection(sectionIndex + 1), 2000);
+      } else {
+        showSection(sectionIndex + 1);
       }
     }
+  }
 
-    function resetCheckboxes() {
-      // Сброс всех выбранных чекбоксов
-      let checkboxes = document.querySelectorAll(".section.visible input[type='checkbox']");
-      checkboxes.forEach(cb => cb.checked = false);
-    }
+  function resetCheckboxes() {
+    let checkboxes = document.querySelectorAll("input[type='checkbox']");
+    checkboxes.forEach(cb => cb.checked = false);
+  }
 
-    function endTest() {
-      const content = results.join("\n");
-      const blob = new Blob([content], { type: "text/plain" });
-      const link = document.createElement("a");
-      link.href = URL.createObjectURL(blob);
-      link.download = "results.txt";
-      link.click();
+  function endTest() {
+    const content = results.join("\n");
+    const blob = new Blob([content], { type: "text/plain" });
+    const link = document.createElement("a");
+    link.href = URL.createObjectURL(blob);
+    link.download = "results.txt";
+    link.click();
 
-      document.body.innerHTML = `<h1>Тест завершен!</h1><p>Результаты сохранены как файл.</p>`;
-    }
+    document.body.innerHTML = `<h1>Тест завершен!</h1><p>Результаты сохранены как файл.</p>`;
+  }
 
-    window.onload = function () {
-      sections = document.querySelectorAll(".section");
-      showSection(0);
-    };
-  </script>
+  window.onload = function () {
+    sections = document.querySelectorAll(".section");
+    showSection(0);
+  };
+</script>
 </head>
 <body>
 
