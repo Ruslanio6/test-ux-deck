@@ -143,7 +143,7 @@
     const checkboxes = document.querySelectorAll(".section.visible input[type='checkbox']:checked");
     const selected = Array.from(checkboxes).map(cb => cb.value);
 
-    results.push(`Колода ${currentDeckIndex + 1} | Раздел ${sectionIndex + 1} | Время: ${timeSpent} сек | Комбинации: ${selected.join(" ") || "Нет"}`);
+    results.push(`К${currentDeckIndex + 1} | Р${sectionIndex + 1} | ${timeSpent} | ${selected.join(" ") || "Нет"}`);
 
     if (sectionIndex === 4) {
       currentDeckIndex++;
