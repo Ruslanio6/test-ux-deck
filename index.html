@@ -109,15 +109,15 @@ function analyzeDeck(deckResults, correctAnswersBySection) {
   let memorizeTime = 0;
 
   deckResults.forEach(result => {
-    const { section, time, answers } = result;
+    const section = result.section;
+    const time = result.time;
+    const answers = result.answers;
 
     if (section === 1) {
-      // Время запоминания (раздел 2, но индекс section = 1 из-за нумерации с нуля)
-      memorizeTime = time;
+      memorizeTime = time; // Время запоминания
     }
 
     if ([2, 3, 4].includes(section)) {
-      // Разделы с ответами (индекс 2,3,4 → борды)
       const correct = correctAnswersBySection[section - 2] || [];
       const f1 = calculateF1(answers, correct);
       totalF1 += f1;
@@ -128,10 +128,9 @@ function analyzeDeck(deckResults, correctAnswersBySection) {
   const avgF1 = totalF1 / 3;
   const avgTime = totalAnswerTime / 3;
 
-  // Финальный балл: 30% запоминание (чем меньше время, тем лучше), 50% точность, 20% скорость реакции
-  const normMemorize = Math.max(0, (6 - memorizeTime) / 6) * 100; // нормировка: максимум 6 сек
-  const normTime = Math.max(0, (8 - avgTime) / 8) * 100;          // нормировка: максимум 8 сек
-
+  // Финальный балл: 30% запоминание, 50% точность, 20% скорость
+  const normMemorize = Math.max(0, (6 - memorizeTime) / 6) * 100;
+  const normTime = Math.max(0, (8 - avgTime) / 8) * 100;
   const score = (normMemorize * 0.3) + (avgF1 * 0.5) + (normTime * 0.2);
 
   return {
@@ -141,28 +140,26 @@ function analyzeDeck(deckResults, correctAnswersBySection) {
     score: score.toFixed(2)
   };
 }
+
 // Конец функции подсчета баллов
 
 // Вспомогательаня F1
 function calculateF1(userAnswers, correctAnswers) {
-  const setUser = new Set(userAnswers);
-  const setCorrect = new Set(correctAnswers);
+  const correctSet = new Set(correctAnswers.map(x => x.trim().toLowerCase()));
+  const userSet = new Set(userAnswers.map(x => x.trim().toLowerCase()));
 
-  let tp = 0; // True Positives: правильные ответы, которые пользователь выбрал
-  setUser.forEach(ans => {
-    if (setCorrect.has(ans)) tp++;
-  });
+  const tp = [...userSet].filter(x => correctSet.has(x)).length;
+  const fp = [...userSet].filter(x => !correctSet.has(x)).length;
+  const fn = [...correctSet].filter(x => !userSet.has(x)).length;
 
-  const fp = setUser.size - tp; // False Positives: лишние ответы
-  const fn = setCorrect.size - tp; // False Negatives: пропущенные правильные
-
-  const precision = tp / (tp + fp || 1); // деление на 1 чтобы избежать NaN
+  const precision = tp / (tp + fp || 1);
   const recall = tp / (tp + fn || 1);
 
-  const f1 = (2 * precision * recall) / (precision + recall || 1);
+  if (tp === 0) return 0;
 
-  return f1 * 100; // Возвращаем как процент (например, 80%)
+  return (2 * precision * recall) / (precision + recall) * 100;
 }
+
 // Конец F1
     
   function updateImages() {
@@ -202,7 +199,7 @@ function calculateF1(userAnswers, correctAnswers) {
     }
   }
 
-  function nextSection() {
+  /* function nextSection() {
     const timeSpent = ((Date.now() - startTime) / 1000).toFixed(2);
     const checkboxes = document.querySelectorAll(".section.visible input[type='checkbox']:checked");
     const selected = Array.from(checkboxes).map(cb => cb.value);
@@ -211,7 +208,7 @@ function calculateF1(userAnswers, correctAnswers) {
   deck: currentDeckIndex,
   section: sectionIndex,
   time: parseFloat(timeSpent),
-  answers: selected
+  answers: selected.length ? selected : ["Нет"]
 });
 
     if (sectionIndex === 4) {
@@ -222,21 +219,134 @@ function calculateF1(userAnswers, correctAnswers) {
         endTest();
       }
     } else {
-      // if (sectionIndex === 1) {
-        // setTimeout(() => showSection(sectionIndex + 1), 2000);
-      //} else
-      //{
         showSection(sectionIndex + 1);
-      //}
     }
-  }
+  } */
 
+  function nextSection() {
+  const timeSpent = ((Date.now() - startTime) / 1000).toFixed(2);
+  const checkboxes = document.querySelectorAll(".section.visible input[type='checkbox']:checked");
+  const selected = Array.from(checkboxes).map(cb => cb.value);
+
+  // Сохраняем результат как объект
+  results.push({
+    deck: currentDeckIndex,
+    section: sectionIndex,
+    time: parseFloat(timeSpent),
+    answers: selected.length ? selected : ["Нет"]
+  });
+
+  // Переход к следующему разделу
+  if (sectionIndex === 4) {
+    currentDeckIndex++;
+    if (currentDeckIndex < decks.length) {
+      showSection(0);
+    } else {
+      endTest();
+    }
+  } else {
+    showSection(sectionIndex + 1);
+  }
+}
+  
   function resetCheckboxes() {
     let checkboxes = document.querySelectorAll("input[type='checkbox']");
     checkboxes.forEach(cb => cb.checked = false);
   }
 
+
+  //Начало новой версси енд тест
   function endTest() {
+  const decksCount = decks.length;
+  const correctAnswersByDeck = [
+    /* твой массив правильных ответов */
+     [ // Колода 1
+      ["Стрит", "Флеш"],
+      ["Сет"],
+      ["Пара", "Две пары"]
+    ],
+    [ // Колода 2
+      ["Стрит"],
+      ["Пара", "Две пары", "Флеш"],
+      ["Пара", "Две пары", "Сет", "Фулл хаус"]
+    ],
+    [ // Колода 3
+      ["Пара"],
+      ["Каре"],
+      ["Пара", "Флеш"]
+    ],
+    [ // Колода 4
+      ["Пара", "Стрит"],
+      ["Пара"],
+      ["Пара", "Две пары"]
+    ],
+    [ // Колода 5
+      ["Пара", "Стрит"],
+      ["Пара", "Две пары", "Сет", "Фулл хаус"],
+      ["Нет"]
+    ],
+    [ // Колода 6
+      ["Пара"],
+      ["Стрит"],
+      ["Пара", "Две пары"]
+    ],
+    [ // Колода 7
+      ["Пара"],
+      ["Стрит", "Флеш"],
+      ["Сет"]
+    ],
+    [ // Колода 8
+      ["Пара"],
+      ["Стрит"],
+      ["Сет"]
+    ],
+  ];
+
+  let csv = "Колода,Время запоминания,Среднее время ответа,Точность (F1),Финальный балл\n";
+
+  for (let i = 0; i < decksCount; i++) {
+    const deckName = decks[i].name;
+    const deckResults = results.filter(r => r.deck === i);
+    const stats = analyzeDeck(deckResults, correctAnswersByDeck[i]);
+
+    csv += `${deckName},${stats.memorizeTime},${stats.avgAnswerTime},${stats.avgF1},${stats.score}\n`;
+  }
+
+  // Добавляем блок "Сырые результаты"
+  csv += "\nСырые ответы:\nКолода,Раздел,Время (сек),Ответы пользователя,Правильные ответы,TP,FP,FN,F1\n";
+
+  results.forEach(r => {
+    const correct = correctAnswersByDeck[r.deck]?.[r.section - 2] || [];
+    const user = r.answers;
+
+    const correctSet = new Set(correct.map(x => x.trim().toLowerCase()));
+    const userSet = new Set(user.map(x => x.trim().toLowerCase()));
+
+    const tp = [...userSet].filter(x => correctSet.has(x)).length;
+    const fp = [...userSet].filter(x => !correctSet.has(x)).length;
+    const fn = [...correctSet].filter(x => !userSet.has(x)).length;
+
+    const precision = tp / (tp + fp || 1);
+    const recall = tp / (tp + fn || 1);
+    const f1 = tp === 0 ? 0 : (2 * precision * recall) / (precision + recall);
+    const f1Score = +(f1 * 100).toFixed(2);
+
+    csv += `К${r.deck + 1},Р${r.section + 1},${r.time},${user.join(" | ") || "Нет"},${correct.join(" | ") || "Нет"},${tp},${fp},${fn},${f1Score}\n`;
+  });
+
+  // Сохраняем CSV
+  const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+  const link = document.createElement("a");
+  link.href = URL.createObjectURL(blob);
+  link.download = "results.csv";
+  link.click();
+
+  document.body.innerHTML = `<h1>Тест завершен!</h1><p>Результаты сохранены как файл <b>results.csv</b>.</p>`;
+}
+
+  // Конец новой версии енд тест
+  
+  /*function endTest() {
   const decksCount = decks.length;
   const correctAnswersByDeck = [
     [ // Колода 1
@@ -321,7 +431,7 @@ function calculateF1(userAnswers, correctAnswers) {
   link.click();
 
   document.body.innerHTML = `<h1>Тест завершен!</h1><p>Результаты сохранены как файл <b>results.csv</b>.</p>`;
-}
+} */
 // End endtest
 
   window.onload = function () {
