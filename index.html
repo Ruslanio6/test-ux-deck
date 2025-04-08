@@ -168,15 +168,39 @@
   }
 
   function endTest() {
-    const content = results.join("\n");
-    const blob = new Blob([content], { type: "text/plain" });
-    const link = document.createElement("a");
-    link.href = URL.createObjectURL(blob);
-    link.download = "results.txt";
-    link.click();
+  let output = "";
+  const deckCount = decks.length;
 
-    document.body.innerHTML = `<h1>Тест завершен!</h1><p>Результаты сохранены как файл.</p>`;
+  for (let i = 0; i < deckCount; i++) {
+    const deckResults = results.filter(r => r.startsWith(`К${i + 1}`));
+    const memorization = deckResults.find(r => r.includes("Р2"));
+    const answers = deckResults.filter(r => /Р[3-5]/.test(r));
+
+    const memTime = parseFloat(memorization?.split(" | ")[2] || 0);
+    const answerTimes = answers.map(r => parseFloat(r.split(" | ")[2]));
+    const avgAnswerTime = answerTimes.length > 0
+      ? (answerTimes.reduce((a, b) => a + b, 0) / answerTimes.length).toFixed(2)
+      : "0.00";
+
+    output += `Колода ${i + 1}\n`;
+    output += `- Время на запоминание: ${memTime} сек\n`;
+    output += `- Время ответов: ${answerTimes.join(", ")} сек\n`;
+    output += `- Среднее время на ответ: ${avgAnswerTime} сек\n`;
+    output += `\n`;
   }
+
+  // Сохраняем и метрики, и сырые данные
+  output += `--- Сырые результаты ---\n${results.join("\n")}`;
+
+  const blob = new Blob([output], { type: "text/plain" });
+  const link = document.createElement("a");
+  link.href = URL.createObjectURL(blob);
+  link.download = "results.txt";
+  link.click();
+
+  document.body.innerHTML = `<h1>Тест завершен!</h1><p>Результаты сохранены как файл.</p>`;
+}
+
 
   window.onload = function () {
     sections = document.querySelectorAll(".section");
