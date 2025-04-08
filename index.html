@@ -134,7 +134,7 @@
     // При показе второго раздела — обновляем изображения
     if (sectionIndex === 1) {
       updateImages();
-      setTimeout(() => nextSection(), 1200);
+      // setTimeout(() => nextSection(), 1200);
     }
   }
 
@@ -197,6 +197,7 @@
   <div class="section">
     <h2>Запомни карты</h2>
     <img src="images/cards01.png" alt="Игральные карты" />
+    <button class="next-button" onclick="nextSection()">Далее</button>
   </div>
 
   <!-- Раздел 3 -->
