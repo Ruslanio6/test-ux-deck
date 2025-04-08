@@ -101,6 +101,66 @@
     name: `Колода ${i + 1}`
   }));
 
+
+// Подсчет баллов кололды
+function analyzeDeck(deckResults, correctAnswersBySection) {
+  let totalF1 = 0;
+  let totalAnswerTime = 0;
+  let memorizeTime = 0;
+
+  deckResults.forEach(result => {
+    const [, sectionRaw, timeRaw, answerRaw] = result.split("|").map(s => s.trim());
+    const section = parseInt(sectionRaw.replace("Р", ""), 10);
+    const time = parseFloat(timeRaw);
+    const answers = answerRaw === "Нет" ? [] : answerRaw.split(" ");
+
+    if (section === 2) {
+      memorizeTime = time; // Время запоминания
+    }
+
+    if ([3, 4, 5].includes(section)) {
+      const correct = correctAnswersBySection[section - 3] || [];
+      const f1 = calculateF1(answers, correct);
+      totalF1 += f1;
+      totalAnswerTime += time;
+    }
+  });
+
+  const avgF1 = totalF1 / 3;
+  const avgTime = totalAnswerTime / 3;
+
+  // Финальный балл: 30% запоминание (чем меньше время, тем лучше), 50% точность, 20% скорость реакции
+  const normMemorize = Math.max(0, (5 - memorizeTime) / 5) * 100; // нормировка: максимум 5 сек
+  const normTime = Math.max(0, (10 - avgTime) / 10) * 100;         // нормировка: максимум 10 сек
+
+  const score = (normMemorize * 0.3) + (avgF1 * 0.5) + (normTime * 0.2);
+
+  return {
+    memorizeTime: memorizeTime.toFixed(2),
+    avgF1: avgF1.toFixed(2),
+    avgAnswerTime: avgTime.toFixed(2),
+    score: score.toFixed(2)
+  };
+}
+// Конец функции подсчета баллов
+
+// Вспомогательаня F1
+function calculateF1(userAnswers, correctAnswers) {
+  const setUser = new Set(userAnswers);
+  const setCorrect = new Set(correctAnswers);
+
+  const truePositives = [...setUser].filter(val => setCorrect.has(val)).length;
+  const falsePositives = [...setUser].filter(val => !setCorrect.has(val)).length;
+  const falseNegatives = [...setCorrect].filter(val => !setUser.has(val)).length;
+
+  const precision = truePositives / (truePositives + falsePositives || 1);
+  const recall = truePositives / (truePositives + falseNegatives || 1);
+
+  const f1 = 2 * (precision * recall) / (precision + recall || 1);
+  return +(f1 * 100).toFixed(2);
+}
+// Конец F1
+    
   function updateImages() {
     const folder = decks[currentDeckIndex].folder;
     const images = sections[1].querySelector("img");
@@ -168,52 +228,69 @@
   }
 
   function endTest() {
-  // Анализ по каждой колоде
-  const scores = [];
-  const decksData = Array.from({ length: decks.length }, () => ({
-    memorizationTime: null,
-    answers: [],
-    totalTime: 0,
-  }));
+  const decksCount = decks.length;
+  const correctAnswersByDeck = [
+    [ // Колода 1
+      ["Пара", "Стрит"],
+      ["Флеш"],
+      ["Пара", "Две пары"]
+    ],
+    [ // Колода 2
+      ["Сет"],
+      ["Фулл хаус"],
+      ["Каре"]
+    ],
+    [ // Колода 3
+      ["Сет"],
+      ["Фулл хаус"],
+      ["Каре"]
+    ],
+    [ // Колода 4
+      ["Сет"],
+      ["Фулл хаус"],
+      ["Каре"]
+    ],
+    [ // Колода 5
+      ["Сет"],
+      ["Фулл хаус"],
+      ["Каре"]
+    ],
+    [ // Колода 6
+      ["Сет"],
+      ["Фулл хаус"],
+      ["Каре"]
+    ],
+    [ // Колода 7
+      ["Сет"],
+      ["Фулл хаус"],
+      ["Каре"]
+    ],
+    [ // Колода 8
+      ["Сет"],
+      ["Фулл хаус"],
+      ["Каре"]
+    ],
+  ];
 
-  results.forEach(line => {
-    const [deck, section, time, rawAnswers] = line.split(" | ");
-    const deckIndex = parseInt(deck.replace("К", "")) - 1;
-    const sectionIndex = parseInt(section.replace("Р", "")) - 1;
-    const timeSpent = parseFloat(time);
-    const isCorrect = rawAnswers.trim() !== "Нет"; // Заглушка — здесь будет сравнение позже
+  let csv = "Колода,Время запоминания,Среднее время ответа,Точность (F1),Финальный балл\n";
 
-    if (sectionIndex === 1) {
-      decksData[deckIndex].memorizationTime = timeSpent;
-    } else if ([2, 3, 4].includes(sectionIndex)) {
-      decksData[deckIndex].answers.push(isCorrect ? 1 : 0);
-      decksData[deckIndex].totalTime += timeSpent;
-    }
-  });
+  for (let i = 0; i < decksCount; i++) {
+    const deckName = decks[i].name;
+    const deckResults = results.filter(r => r.startsWith(`К${i + 1}`));
+    const stats = analyzeDeck(deckResults, correctAnswersByDeck[i]);
 
-  // Нормализация по макс значениям
-  const maxMem = Math.max(...decksData.map(d => d.memorizationTime || 0));
-  const maxAnsTime = Math.max(...decksData.map(d => d.totalTime / d.answers.length));
+    csv += `${deckName},${stats.memorizeTime},${stats.avgAnswerTime},${stats.avgF1},${stats.score}\n`;
+  }
 
-  decksData.forEach((data, i) => {
-    const accuracy = data.answers.reduce((a, b) => a + b, 0) / data.answers.length;
-    const normMem = 1 - (data.memorizationTime / maxMem || 0);
-    const normAnsTime = 1 - ((data.totalTime / data.answers.length) / maxAnsTime || 0);
-    const score = (accuracy * 0.5 + normMem * 0.3 + normAnsTime * 0.2) * 100;
-
-    scores.push(`Колода ${i + 1} | Точность: ${(accuracy * 100).toFixed(1)}% | Время запоминания: ${data.memorizationTime}s | Сред. время ответа: ${(data.totalTime / data.answers.length).toFixed(2)}s | Балл: ${score.toFixed(1)}`);
-  });
-
-  const content = results.join("\n") + "\n\n---\n\n" + scores.join("\n");
-  const blob = new Blob([content], { type: "text/plain" });
+  // Сохраняем файл
+  const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
   const link = document.createElement("a");
   link.href = URL.createObjectURL(blob);
-  link.download = "results.txt";
+  link.download = "results.csv";
   link.click();
 
-  document.body.innerHTML = `<h1>Тест завершен!</h1><p>Результаты сохранены как файл.</p>`;
+  document.body.innerHTML = `<h1>Тест завершен!</h1><p>Результаты сохранены как файл <b>results.csv</b>.</p>`;
 }
-
 // End endtest
 
   window.onload = function () {
