@@ -129,8 +129,8 @@ function analyzeDeck(deckResults, correctAnswersBySection) {
   const avgTime = totalAnswerTime / 3;
 
   // Финальный балл: 30% запоминание, 50% точность, 20% скорость
-  const normMemorize = Math.max(0, (6 - memorizeTime) / 6) * 100;
-  const normTime = Math.max(0, (8 - avgTime) / 8) * 100;
+  const normMemorize = Math.max(0, (12 - memorizeTime) / 12) * 100;
+  const normTime = Math.max(0, (20 - avgTime) / 20) * 100;
   const score = (normMemorize * 0.3) + (avgF1 * 0.5) + (normTime * 0.2);
 
   return {
@@ -198,30 +198,6 @@ function calculateF1(userAnswers, correctAnswers) {
       // setTimeout(() => nextSection(), 1200);
     }
   }
-
-  /* function nextSection() {
-    const timeSpent = ((Date.now() - startTime) / 1000).toFixed(2);
-    const checkboxes = document.querySelectorAll(".section.visible input[type='checkbox']:checked");
-    const selected = Array.from(checkboxes).map(cb => cb.value);
-
-    results.push({
-  deck: currentDeckIndex,
-  section: sectionIndex,
-  time: parseFloat(timeSpent),
-  answers: selected.length ? selected : ["Нет"]
-});
-
-    if (sectionIndex === 4) {
-      currentDeckIndex++;
-      if (currentDeckIndex < decks.length) {
-        showSection(0);
-      } else {
-        endTest();
-      }
-    } else {
-        showSection(sectionIndex + 1);
-    }
-  } */
 
   function nextSection() {
   const timeSpent = ((Date.now() - startTime) / 1000).toFixed(2);
@@ -346,93 +322,6 @@ function calculateF1(userAnswers, correctAnswers) {
 
   // Конец новой версии енд тест
   
-  /*function endTest() {
-  const decksCount = decks.length;
-  const correctAnswersByDeck = [
-    [ // Колода 1
-      ["Стрит", "Флеш"],
-      ["Сет"],
-      ["Пара", "Две пары"]
-    ],
-    [ // Колода 2
-      ["Стрит"],
-      ["Пара", "Две пары", "Флеш"],
-      ["Пара", "Две пары", "Сет", "Фулл хаус"]
-    ],
-    [ // Колода 3
-      ["Пара"],
-      ["Каре"],
-      ["Пара", "Флеш"]
-    ],
-    [ // Колода 4
-      ["Пара", "Стрит"],
-      ["Пара"],
-      ["Пара", "Две пары"]
-    ],
-    [ // Колода 5
-      ["Пара", "Стрит"],
-      ["Пара", "Две пары", "Сет", "Фулл хаус"],
-      ["Нет"]
-    ],
-    [ // Колода 6
-      ["Пара"],
-      ["Стрит"],
-      ["Пара", "Две пары"]
-    ],
-    [ // Колода 7
-      ["Пара"],
-      ["Стрит", "Флеш"],
-      ["Сет"]
-    ],
-    [ // Колода 8
-      ["Пара"],
-      ["Стрит"],
-      ["Сет"]
-    ],
-  ];
-
-  let csv = "Колода,Время запоминания,Среднее время ответа,Точность (F1),Финальный балл\n";
-
-  for (let i = 0; i < decksCount; i++) {
-    const deckName = decks[i].name;
-    const deckResults = results.filter(r => r.deck === i);
-    const stats = analyzeDeck(deckResults, correctAnswersByDeck[i]);
-
-    csv += `${deckName},${stats.memorizeTime},${stats.avgTime},${stats.avgF1},${stats.score}\n`;
-  }
-
-  // Добавляем блок "Сырые результаты"
-  csv += "\nСырые ответы:\nКолода,Раздел,Время (сек),Ответы пользователя,Правильные ответы,TP,FP,FN,F1\n";
-
-  results.forEach(r => {
-    const correct = correctAnswersByDeck[r.deck]?.[r.section] || [];
-    const user = r.answers;
-
-    const correctSet = new Set(correct.map(x => x.trim().toLowerCase()));
-    const userSet = new Set(user.map(x => x.trim().toLowerCase()));
-
-    const tp = [...userSet].filter(x => correctSet.has(x)).length;
-    const fp = [...userSet].filter(x => !correctSet.has(x)).length;
-    const fn = [...correctSet].filter(x => !userSet.has(x)).length;
-
-    const precision = tp / (tp + fp || 1);
-    const recall = tp / (tp + fn || 1);
-    const f1 = tp === 0 ? 0 : (2 * precision * recall) / (precision + recall);
-    const f1Score = +(f1 * 100).toFixed(2);
-
-    csv += `К${r.deck + 1},Р${r.section + 1},${r.time},${user.join(" | ") || "Нет"},${correct.join(" | ") || "Нет"},${tp},${fp},${fn},${f1Score}\n`;
-  });
-
-  // Сохраняем файл
-  const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
-  const link = document.createElement("a");
-  link.href = URL.createObjectURL(blob);
-  link.download = "results.csv";
-  link.click();
-
-  document.body.innerHTML = `<h1>Тест завершен!</h1><p>Результаты сохранены как файл <b>results.csv</b>.</p>`;
-} */
-// End endtest
 
   window.onload = function () {
     sections = document.querySelectorAll(".section");
@@ -445,8 +334,8 @@ function calculateF1(userAnswers, correctAnswers) {
    <!-- Раздел 1 -->
   <div class="section visible">
     <h1>Исследование игральных карт</h1>
-    <h2>Всего тестирую 8 колод, на каждую колоду по 3 борда. В среднем тест займет около 3х минут. Пожалуйста максимум внимания на тест, не отвлекайся!</h2>
-    <p>Я покажу тебе 2 карты, у тебя будет 2 секунды чтоб их запомнить, будем считать что ты получил их на руку. После этого ты по порядку будешь видеть борды, никуда не торопись но и особо не медли, отмечай комбинации которые получилось бы собрать, если ты можешь собрать одновременно несколько комбинаций, отмечай их тоже. Сейчас будет тестироваться <span id="deck-name">Колода 1</span></p>
+    <h2>Всего тестирую 8 колод, на каждую колоду по 3 борда. В среднем тест займет около 8ми минут. Пожалуйста максимум внимания на тест, не отвлекайся!</h2>
+    <p>Я покажу тебе 2 карты, как запомнишь их кликай "Далее", будем считать что ты получил их на руку. После этого ты по порядку будешь видеть борды, никуда не торопись но и особо не медли, отмечай комбинации которые получилось бы собрать, если ты можешь собрать одновременно несколько комбинаций, отмечай их тоже. Сейчас будет тестироваться <span id="deck-name">Колода 1</span></p>
     <button class="next-button" onclick="nextSection()">Начать тест</button>
   </div>
 
