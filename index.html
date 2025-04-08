@@ -168,31 +168,44 @@
   }
 
   function endTest() {
-  let output = "";
-  const deckCount = decks.length;
+  // Анализ по каждой колоде
+  const scores = [];
+  const decksData = Array.from({ length: decks.length }, () => ({
+    memorizationTime: null,
+    answers: [],
+    totalTime: 0,
+  }));
 
-  for (let i = 0; i < deckCount; i++) {
-    const deckResults = results.filter(r => r.startsWith(`К${i + 1}`));
-    const memorization = deckResults.find(r => r.includes("Р2"));
-    const answers = deckResults.filter(r => /Р[3-5]/.test(r));
+  results.forEach(line => {
+    const [deck, section, time, rawAnswers] = line.split(" | ");
+    const deckIndex = parseInt(deck.replace("К", "")) - 1;
+    const sectionIndex = parseInt(section.replace("Р", "")) - 1;
+    const timeSpent = parseFloat(time);
+    const isCorrect = rawAnswers.trim() !== "Нет"; // Заглушка — здесь будет сравнение позже
 
-    const memTime = parseFloat(memorization?.split(" | ")[2] || 0);
-    const answerTimes = answers.map(r => parseFloat(r.split(" | ")[2]));
-    const avgAnswerTime = answerTimes.length > 0
-      ? (answerTimes.reduce((a, b) => a + b, 0) / answerTimes.length).toFixed(2)
-      : "0.00";
+    if (sectionIndex === 1) {
+      decksData[deckIndex].memorizationTime = timeSpent;
+    } else if ([2, 3, 4].includes(sectionIndex)) {
+      decksData[deckIndex].answers.push(isCorrect ? 1 : 0);
+      decksData[deckIndex].totalTime += timeSpent;
+    }
+  });
 
-    output += `Колода ${i + 1}\n`;
-    output += `- Время на запоминание: ${memTime} сек\n`;
-    output += `- Время ответов: ${answerTimes.join(", ")} сек\n`;
-    output += `- Среднее время на ответ: ${avgAnswerTime} сек\n`;
-    output += `\n`;
-  }
+  // Нормализация по макс значениям
+  const maxMem = Math.max(...decksData.map(d => d.memorizationTime || 0));
+  const maxAnsTime = Math.max(...decksData.map(d => d.totalTime / d.answers.length));
 
-  // Сохраняем и метрики, и сырые данные
-  output += `--- Сырые результаты ---\n${results.join("\n")}`;
+  decksData.forEach((data, i) => {
+    const accuracy = data.answers.reduce((a, b) => a + b, 0) / data.answers.length;
+    const normMem = 1 - (data.memorizationTime / maxMem || 0);
+    const normAnsTime = 1 - ((data.totalTime / data.answers.length) / maxAnsTime || 0);
+    const score = (accuracy * 0.5 + normMem * 0.3 + normAnsTime * 0.2) * 100;
 
-  const blob = new Blob([output], { type: "text/plain" });
+    scores.push(`Колода ${i + 1} | Точность: ${(accuracy * 100).toFixed(1)}% | Время запоминания: ${data.memorizationTime}s | Сред. время ответа: ${(data.totalTime / data.answers.length).toFixed(2)}s | Балл: ${score.toFixed(1)}`);
+  });
+
+  const content = results.join("\n") + "\n\n---\n\n" + scores.join("\n");
+  const blob = new Blob([content], { type: "text/plain" });
   const link = document.createElement("a");
   link.href = URL.createObjectURL(blob);
   link.download = "results.txt";
@@ -201,6 +214,7 @@
   document.body.innerHTML = `<h1>Тест завершен!</h1><p>Результаты сохранены как файл.</p>`;
 }
 
+// End endtest
 
   window.onload = function () {
     sections = document.querySelectorAll(".section");
