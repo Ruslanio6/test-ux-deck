@@ -109,17 +109,16 @@ function analyzeDeck(deckResults, correctAnswersBySection) {
   let memorizeTime = 0;
 
   deckResults.forEach(result => {
-    const [, sectionRaw, timeRaw, answerRaw] = result.split("|").map(s => s.trim());
-    const section = parseInt(sectionRaw.replace("Р", ""), 10);
-    const time = parseFloat(timeRaw);
-    const answers = answerRaw === "Нет" ? [] : answerRaw.split(" ");
+    const { section, time, answers } = result;
 
-    if (section === 2) {
-      memorizeTime = time; // Время запоминания
+    if (section === 1) {
+      // Время запоминания (раздел 2, но индекс section = 1 из-за нумерации с нуля)
+      memorizeTime = time;
     }
 
-    if ([3, 4, 5].includes(section)) {
-      const correct = correctAnswersBySection[section - 3] || [];
+    if ([2, 3, 4].includes(section)) {
+      // Разделы с ответами (индекс 2,3,4 → борды)
+      const correct = correctAnswersBySection[section - 2] || [];
       const f1 = calculateF1(answers, correct);
       totalF1 += f1;
       totalAnswerTime += time;
@@ -131,7 +130,7 @@ function analyzeDeck(deckResults, correctAnswersBySection) {
 
   // Финальный балл: 30% запоминание (чем меньше время, тем лучше), 50% точность, 20% скорость реакции
   const normMemorize = Math.max(0, (6 - memorizeTime) / 6) * 100; // нормировка: максимум 6 сек
-  const normTime = Math.max(0, (8 - avgTime) / 8) * 100;         // нормировка: максимум 8 сек
+  const normTime = Math.max(0, (8 - avgTime) / 8) * 100;          // нормировка: максимум 8 сек
 
   const score = (normMemorize * 0.3) + (avgF1 * 0.5) + (normTime * 0.2);
 
@@ -149,15 +148,20 @@ function calculateF1(userAnswers, correctAnswers) {
   const setUser = new Set(userAnswers);
   const setCorrect = new Set(correctAnswers);
 
-  const truePositives = [...setUser].filter(val => setCorrect.has(val)).length;
-  const falsePositives = [...setUser].filter(val => !setCorrect.has(val)).length;
-  const falseNegatives = [...setCorrect].filter(val => !setUser.has(val)).length;
+  let tp = 0; // True Positives: правильные ответы, которые пользователь выбрал
+  setUser.forEach(ans => {
+    if (setCorrect.has(ans)) tp++;
+  });
 
-  const precision = truePositives / (truePositives + falsePositives || 1);
-  const recall = truePositives / (truePositives + falseNegatives || 1);
+  const fp = setUser.size - tp; // False Positives: лишние ответы
+  const fn = setCorrect.size - tp; // False Negatives: пропущенные правильные
 
-  const f1 = 2 * (precision * recall) / (precision + recall || 1);
-  return +(f1 * 100).toFixed(2);
+  const precision = tp / (tp + fp || 1); // деление на 1 чтобы избежать NaN
+  const recall = tp / (tp + fn || 1);
+
+  const f1 = (2 * precision * recall) / (precision + recall || 1);
+
+  return f1 * 100; // Возвращаем как процент (например, 80%)
 }
 // Конец F1
     
