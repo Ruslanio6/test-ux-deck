@@ -203,7 +203,12 @@ function calculateF1(userAnswers, correctAnswers) {
     const checkboxes = document.querySelectorAll(".section.visible input[type='checkbox']:checked");
     const selected = Array.from(checkboxes).map(cb => cb.value);
 
-    results.push(`К${currentDeckIndex + 1} | Р${sectionIndex + 1} | ${timeSpent} | ${selected.join(" ") || "Нет"}`);
+    results.push({
+  deck: currentDeckIndex,
+  section: sectionIndex,
+  time: parseFloat(timeSpent),
+  answers: selected
+});
 
     if (sectionIndex === 4) {
       currentDeckIndex++;
@@ -276,11 +281,33 @@ function calculateF1(userAnswers, correctAnswers) {
 
   for (let i = 0; i < decksCount; i++) {
     const deckName = decks[i].name;
-    const deckResults = results.filter(r => r.startsWith(`К${i + 1}`));
+    const deckResults = results.filter(r => r.deck === i);
     const stats = analyzeDeck(deckResults, correctAnswersByDeck[i]);
 
-    csv += `${deckName},${stats.memorizeTime},${stats.avgAnswerTime},${stats.avgF1},${stats.score}\n`;
+    csv += `${deckName},${stats.memorizeTime},${stats.avgTime},${stats.avgF1},${stats.score}\n`;
   }
+
+  // Добавляем блок "Сырые результаты"
+  csv += "\nСырые ответы:\nКолода,Раздел,Время (сек),Ответы пользователя,Правильные ответы,TP,FP,FN,F1\n";
+
+  results.forEach(r => {
+    const correct = correctAnswersByDeck[r.deck]?.[r.section] || [];
+    const user = r.answers;
+
+    const correctSet = new Set(correct.map(x => x.trim().toLowerCase()));
+    const userSet = new Set(user.map(x => x.trim().toLowerCase()));
+
+    const tp = [...userSet].filter(x => correctSet.has(x)).length;
+    const fp = [...userSet].filter(x => !correctSet.has(x)).length;
+    const fn = [...correctSet].filter(x => !userSet.has(x)).length;
+
+    const precision = tp / (tp + fp || 1);
+    const recall = tp / (tp + fn || 1);
+    const f1 = tp === 0 ? 0 : (2 * precision * recall) / (precision + recall);
+    const f1Score = +(f1 * 100).toFixed(2);
+
+    csv += `К${r.deck + 1},Р${r.section + 1},${r.time},${user.join(" | ") || "Нет"},${correct.join(" | ") || "Нет"},${tp},${fp},${fn},${f1Score}\n`;
+  });
 
   // Сохраняем файл
   const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
