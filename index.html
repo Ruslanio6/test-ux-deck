@@ -287,6 +287,7 @@ function calculateAccuracy(userAnswer, correctAnswer) {
   window.nextSection = nextSection; // Чтоб кнопки работали
     
   function resetRadios() {
+  if (![2, 3, 4].includes(sectionIndex)) return;
   const radios = document.querySelectorAll("input[name='hand']");
   radios.forEach(r => {
     r.checked = false;
@@ -294,8 +295,7 @@ function calculateAccuracy(userAnswer, correctAnswer) {
       r.checked = true;
     }
   });
-}   
-
+}  
 
   //Начало новой версси енд тест
   function endTest() {
@@ -324,17 +324,18 @@ function calculateAccuracy(userAnswer, correctAnswer) {
   }
 
   // Добавляем блок "Сырые результаты"
-  csv += "\nСырые ответы:\nКолода,Раздел,Время (сек),Ответы пользователя,Правильные ответы,TP,FP,FN,F1\n";
+  // csv += "\nСырые ответы:\nКолода,Раздел,Время (сек),Ответы пользователя,Правильные ответы,TP,FP,FN,F1\n";
+  csv += "\nСырые ответы:\nКолода,Раздел,Время (сек),Ответ пользователя,Правильный ответ,Результат\n";
 
   results.forEach(r => {
-    const correct = correctAnswersByDeck[r.deck]?.[r.section - 2] || "Нет";
-    const user = r.answer;
+  const correct = correctAnswersByDeck[r.deck]?.[r.section - 2] || "Нет";
+  const user = r.answer;
 
-    const isCorrect = user.trim().toLowerCase() === correct.trim().toLowerCase();
-    const f1Score = isCorrect ? 100 : 0;
+  const isCorrect = user.trim().toLowerCase() === correct.trim().toLowerCase();
+  const f1Score = isCorrect ? 100 : 0;
 
-    csv += `К${r.deck + 1},Р${r.section + 1},${r.time},"${user}","${correct}",${isCorrect ? 1 : 0},${isCorrect ? 0 : 1},${isCorrect ? 0 : 1},${f1Score}\n`;
-  });
+  csv += `К${r.deck + 1},Р${r.section + 1},${r.time},"${user}","${correct}",${isCorrect ? "Верно" : "Неверно"}\n`;
+});
 
   // Сохраняем CSV
   const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
