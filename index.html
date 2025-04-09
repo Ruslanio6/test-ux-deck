@@ -287,7 +287,7 @@ function calculateAccuracy(userAnswer, correctAnswer) {
   window.nextSection = nextSection; // Чтоб кнопки работали
     
   function resetRadios() {
-  if (![2, 3, 4].includes(sectionIndex)) return;
+  if (![0, 1, 2, 3, 4].includes(sectionIndex)) return;
   const radios = document.querySelectorAll("input[name='hand']");
   radios.forEach(r => {
     r.checked = false;
