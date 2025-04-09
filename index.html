@@ -291,7 +291,7 @@ function calculateAccuracy(userAnswer, correctAnswer) {
   const radios = document.querySelectorAll("input[name='hand']");
   radios.forEach(r => {
     r.checked = false;
-    if (r.value.toLowerCase() === "нет") {
+    if (r.value() === "Нет") {
       r.checked = true;
     }
   });
