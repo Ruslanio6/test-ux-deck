@@ -197,7 +197,7 @@ function calculateAccuracy(userAnswer, correctAnswer) {
   section: sectionIndex,
   time: parseFloat(timeSpent),
   answer: answer
-});
+  });
 
   // Переход к следующему разделу
   if (sectionIndex === 4) {
@@ -209,9 +209,11 @@ function calculateAccuracy(userAnswer, correctAnswer) {
     }
   } else {
     showSection(sectionIndex + 1);
+    }
   }
-}
-  
+
+  window.nextSection = nextSection; // Чтоб кнопки работали
+    
   function resetRadios() {
   const radios = document.querySelectorAll("input[name='hand']");
   radios.forEach(r => {
